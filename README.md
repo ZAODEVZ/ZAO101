@@ -6,11 +6,12 @@ Live at **zao-101.vercel.app** (once Vercel is wired).
 
 ## What this is
 
-A static site with 6 pages:
+A static site with 7 pages:
 - `index.html` — home
 - `pillars.html` — the 4 pillars
 - `org.html` — the org chart / brand hierarchy (shareable)
 - `ecosystem.html` — every live ZAO project at a glance
+- `zabal-games.html` — the builder-engagement door into The ZAO
 - `join.html` — how to engage
 - `faq.html` — common questions
 
