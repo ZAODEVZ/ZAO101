@@ -1,14 +1,15 @@
 # ZAO 101
 
-Learn about The ZAO. A decentralized music community.
+Learn about The ZAO. A decentralized impact network.
 
 Live at **zao-101.vercel.app** (once Vercel is wired).
 
 ## What this is
 
-A static site with 4 pages:
+A static site with 5 pages:
 - `index.html` — home
 - `pillars.html` — the 4 pillars
+- `org.html` — the org chart / brand hierarchy (shareable)
 - `join.html` — how to engage
 - `faq.html` — common questions
 
