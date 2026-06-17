@@ -22,7 +22,6 @@ const ORG_PLAIN_TEXT = `THE ZAO
   +-- COMMUNITY PARTNERSHIPS (beside The ZAO, equal billing)
   |     - COC Concertz          led by Thy Revolution,
   |                             NOT owned by The ZAO
-  |                             (framing pending COC confirmation)
   |
   +-- COMMUNITY COLLABS (co-created, unnamed set)
         - misc community collaborations`;
@@ -82,9 +81,6 @@ export default function OrgPage() {
               Community partnership - led by Thy Revolution, NOT owned by The
               ZAO. Present it side by side ("ZAO Festivals + COC Concertz"),
               never "The ZAO's COC."
-            </span>
-            <span className="org-pending">
-              (framing pending COC confirmation)
             </span>
           </div>
         </div>
