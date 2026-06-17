@@ -28,9 +28,15 @@ const ERC1155_BALANCE_ABI = [
   },
 ] as const;
 
+// Optimism RPC endpoint. Defaults to the public node, which can rate-limit, so
+// it is overridable via NEXT_PUBLIC_OPTIMISM_RPC_URL (must be NEXT_PUBLIC_ as
+// this client runs in the browser).
+const OPTIMISM_RPC_URL =
+  process.env.NEXT_PUBLIC_OPTIMISM_RPC_URL || "https://mainnet.optimism.io";
+
 const publicClient = createPublicClient({
   chain: optimism,
-  transport: http("https://mainnet.optimism.io"),
+  transport: http(OPTIMISM_RPC_URL),
 });
 
 export interface GateResult {
