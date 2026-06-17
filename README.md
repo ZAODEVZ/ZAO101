@@ -51,7 +51,7 @@ npm run build    # production build
 
 - [thezao.com](https://thezao.com)
 - [@zaal on Farcaster](https://farcaster.xyz/zaal)
-- [GitHub](https://github.com/bettercallzaal/zao-101)
+- [GitHub](https://github.com/ZAODEVZ/ZAO101)
 
 ## License
 
