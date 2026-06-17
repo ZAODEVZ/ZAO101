@@ -1,29 +1,51 @@
-# ZAO 101
+# ZAO 101 + ZAO 201
 
-Learn about The ZAO. A decentralized impact network.
+Learn about The ZAO. A decentralized impact network. Music first, community
+second, tech third.
 
-Live at **zao-101.vercel.app** (once Vercel is wired).
+Two tiers in one Next.js 14 (App Router) site:
 
-## What this is
+- **ZAO 101** - the open, public front door. No wallet. Start Here, the org
+  chart, a live ecosystem overview, ZABAL Games, and how to join.
+- **ZAO 201** - the token-gated members floor. Connect a wallet holding OG or
+  ZOR on Optimism to reveal the members view and the how-to layer.
 
-A static site with 7 pages:
-- `index.html` — home
-- `pillars.html` — the 4 pillars
-- `org.html` — the org chart / brand hierarchy (shareable)
-- `ecosystem.html` — every live ZAO project at a glance
-- `zabal-games.html` — the builder-engagement door into The ZAO
-- `join.html` — how to engage
-- `faq.html` — common questions
+## Single source of truth
 
-Plain HTML + CSS. No build step. No framework. Just read + edit.
+All link data comes from the ZAO Nexus public read-only API at
+`nexus.thezao.com/api`. This repo keeps **no local copy** of link data - the
+ecosystem overview and the members directory are fetched live in server
+components with 1-hour revalidation.
 
-## For humans
+## The 201 gate
 
-Open any `.html` in a browser to preview. Every page has `<div class="placeholder">` blocks marking gaps where real content should go.
+Connecting a wallet reads either token balance on Optimism (chainId 10) via
+viem and a public Optimism RPC:
 
-## For agents (QuadWork dev team)
+- OG (ERC-20) `0x34cE89baA7E4a4B00E17F7E4C0cb97105C216957` - `balanceOf(addr) > 0`
+- ZOR (ERC-1155) `0x9885CCeEf7E8371Bf8d6f2413723D25917E7445c` - `balanceOf(addr, 0) > 0`
 
-Read `CLAUDE.md` first. Follow `.quadwork-allowlist`. Match the voice rules.
+Holding either grants access. This gate is **curation, not security** - it only
+decides what UI renders. There are no secrets behind it.
+
+## Pages
+
+- `/` - ZAO 101 home (Start Here + sections)
+- `/pillars` - the four pillars
+- `/org` - the org chart with one-click copy of the plain-text version
+- `/ecosystem` - live ecosystem overview (`audience=ecosystem&group=true`)
+- `/zabal-games` - the builder-engagement door
+- `/join` - how to engage
+- `/faq` - common questions
+- `/201` - the token-gated members floor
+
+## Develop
+
+```bash
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # production build
+```
 
 ## Links
 
