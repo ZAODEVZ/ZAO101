@@ -20,6 +20,15 @@ export default function FaqPage() {
         together first, read the <Link href="/org">org chart</Link>.
       </p>
 
+      <h3>Do I need a wallet or crypto to join?</h3>
+      <p>
+        No. Everything on ZAO 101 - the pillars, the org chart, the ecosystem,
+        and how to join - is open with no wallet. You only need a wallet for the
+        members floor, <Link href="/201">ZAO 201</Link>, which checks for OG or
+        ZOR on Optimism. Start by showing up and owning something; OG and ZOR
+        come from participation, not the other way around.
+      </p>
+
       <h3>Is The ZAO a label?</h3>
       <p>
         Not in the traditional sense. A label signs artists and takes ownership
