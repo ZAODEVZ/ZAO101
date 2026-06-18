@@ -19,17 +19,24 @@ export default function JoinPage() {
 
       <div className="start-here">
         <h2>Your first action</h2>
-        <p>
-          Tell us what you want to own. Not "how can I help" - what specific
-          thing do you want to be responsible for? A song, a tool, an event, a
-          page like this one.
-        </p>
-        <p>
-          DM{" "}
-          <a href="https://farcaster.xyz/zaal">@zaal on Farcaster</a> and say
-          it plainly. That is the front door. We point you at the right group
-          from there.
-        </p>
+        <p>Three steps. No wallet, no application.</p>
+        <ol>
+          <li>
+            <strong>Decide what you want to own.</strong> Not "how can I help" -
+            what specific thing do you want to be responsible for? A song, a
+            tool, an event, a page like this one.
+          </li>
+          <li>
+            <strong>Say it plainly.</strong> DM{" "}
+            <a href="https://farcaster.xyz/zaal">@zaal on Farcaster</a>. That is
+            the front door. We point you at the right group from there.
+          </li>
+          <li>
+            <strong>Show up.</strong> The community meets every Monday at 6pm EST
+            in small fractal groups - that is where the work gets done and your
+            contribution gets recognized. Come to one and find your footing.
+          </li>
+        </ol>
       </div>
 
       <h2>How committing works</h2>
