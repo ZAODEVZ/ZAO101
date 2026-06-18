@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { SITE_URL } from "@/lib/site";
@@ -57,6 +57,13 @@ export const metadata: Metadata = {
     "fc:miniapp": JSON.stringify(miniappEmbed),
     "fc:frame": JSON.stringify(frameEmbed),
   },
+};
+
+// Tint the mobile browser chrome to the ZAO navy so the address bar matches the
+// dark theme (and the installed app's manifest theme_color). Dark theme only,
+// so a single color covers both color schemes.
+export const viewport: Viewport = {
+  themeColor: "#0a1628",
 };
 
 export default function RootLayout({
