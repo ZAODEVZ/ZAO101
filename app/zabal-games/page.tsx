@@ -73,10 +73,6 @@ export default function ZabalGamesPage() {
           <strong>August - Finals.</strong> Judging and showcase.
         </li>
       </ul>
-      <p>
-        ZABAL Games runs in three phases across the summer: June (bootcamp),
-        July (build-a-thon), and August (finals).
-      </p>
 
       <h2>The hub</h2>
       <p>
