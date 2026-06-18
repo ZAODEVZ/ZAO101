@@ -42,6 +42,11 @@ export interface FlatResponse {
 
 const BASE = "https://nexus.thezao.com/api/links";
 
+// Cap how long we wait on the Nexus. Without this, a hung upstream stalls the
+// whole server-component render until the platform function timeout; with it the
+// request aborts, the catch returns null, and the page falls back gracefully.
+const FETCH_TIMEOUT_MS = 8000;
+
 // Server-side fetch with 1-hour ISR cache, per the contract.
 // Returns null on any failure so callers can render a graceful fallback
 // instead of crashing the page (the Nexus is canonical but may be down).
@@ -66,6 +71,7 @@ export async function fetchGrouped(
   try {
     const res = await fetch(buildUrl(params, true), {
       next: { revalidate: 3600 },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
     if (!res.ok) return null;
     const data = (await res.json()) as GroupedResponse;
@@ -82,6 +88,7 @@ export async function fetchFlat(
   try {
     const res = await fetch(buildUrl(params, false), {
       next: { revalidate: 3600 },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
     if (!res.ok) return null;
     const data = (await res.json()) as FlatResponse;
