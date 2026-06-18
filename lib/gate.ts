@@ -57,29 +57,44 @@ export interface GateResult {
   holdsZor: boolean;
 }
 
-// Returns access status for an address. Each balance check is isolated so one
-// failing call (e.g. a flaky RPC) does not block the other token's result.
+// Returns access status for an address. The two reads are independent, and we
+// treat a read that fails differently from one that returns zero: collapsing an
+// RPC error into "0 balance" would falsely deny a real holder whenever the
+// public nodes are flaky. So we throw on an indeterminate result and let the
+// caller surface a retry instead of rendering a wrong "denied".
 export async function checkAccess(address: Address): Promise<GateResult> {
-  const [ogBal, zorBal] = await Promise.all([
-    publicClient
-      .readContract({
-        address: OG_ADDRESS,
-        abi: erc20Abi,
-        functionName: "balanceOf",
-        args: [address],
-      })
-      .catch(() => 0n),
-    publicClient
-      .readContract({
-        address: ZOR_ADDRESS,
-        abi: ERC1155_BALANCE_ABI,
-        functionName: "balanceOf",
-        args: [address, 0n],
-      })
-      .catch(() => 0n),
+  const [ogRes, zorRes] = await Promise.allSettled([
+    publicClient.readContract({
+      address: OG_ADDRESS,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [address],
+    }),
+    publicClient.readContract({
+      address: ZOR_ADDRESS,
+      abi: ERC1155_BALANCE_ABI,
+      functionName: "balanceOf",
+      args: [address, 0n],
+    }),
   ]);
 
-  const holdsOg = ogBal > 0n;
-  const holdsZor = zorBal > 0n;
-  return { holdsOg, holdsZor, hasAccess: holdsOg || holdsZor };
+  const holdsOg = ogRes.status === "fulfilled" && ogRes.value > 0n;
+  const holdsZor = zorRes.status === "fulfilled" && zorRes.value > 0n;
+
+  // A confirmed positive balance is authoritative - grant even if the other
+  // read failed, since access needs only one of the two tokens.
+  if (holdsOg || holdsZor) {
+    return { holdsOg, holdsZor, hasAccess: true };
+  }
+
+  // No positive balance seen. If either read failed we cannot prove the wallet
+  // holds nothing, so we refuse to render a false denial and ask for a retry.
+  if (ogRes.status === "rejected" || zorRes.status === "rejected") {
+    throw new Error(
+      "Could not reach Optimism to check your balances. Please try again.",
+    );
+  }
+
+  // Both reads succeeded and both were zero: a confident denial.
+  return { holdsOg: false, holdsZor: false, hasAccess: false };
 }
