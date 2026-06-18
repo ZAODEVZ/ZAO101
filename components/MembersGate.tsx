@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import type { Address } from "viem";
 import { checkAccess } from "@/lib/gate";
@@ -17,8 +17,14 @@ type Status =
   | "denied"
   | "error";
 
+type AccountsHandler = (accounts: string[]) => void;
+
 interface EthereumProvider {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+  // Optional EIP-1193 event API. Injected wallets expose these so a dapp can
+  // react when the user switches or disconnects accounts in the wallet UI.
+  on?: (event: string, handler: AccountsHandler) => void;
+  removeListener?: (event: string, handler: AccountsHandler) => void;
 }
 
 function getProvider(): EthereumProvider | null {
@@ -35,6 +41,67 @@ export default function MembersGate({
   const [status, setStatus] = useState<Status>("disconnected");
   const [address, setAddress] = useState<Address | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Run the balance check for an address and move to granted/denied. Shared by
+  // the initial connect, a silent reconnect, and the accountsChanged handler so
+  // the gate always reflects the wallet's currently selected account. We only
+  // read a balance on Optimism (via the gate's own RPC), so the wallet's active
+  // chain does not matter and chainChanged needs no handling here.
+  const check = useCallback(async (addr: Address) => {
+    setError(null);
+    setAddress(addr);
+    setStatus("checking");
+    try {
+      const result = await checkAccess(addr);
+      setStatus(result.hasAccess ? "granted" : "denied");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Could not check token balances.";
+      setError(message);
+      setStatus("error");
+    }
+  }, []);
+
+  // On mount, silently restore a prior connection without prompting. eth_accounts
+  // returns the already-authorized accounts (empty if the user never connected
+  // or has since disconnected), so a page refresh keeps members on the floor.
+  useEffect(() => {
+    const provider = getProvider();
+    if (!provider) return;
+
+    let cancelled = false;
+
+    provider
+      .request({ method: "eth_accounts" })
+      .then((result) => {
+        const addr = (result as string[] | undefined)?.[0] as
+          | Address
+          | undefined;
+        if (!cancelled && addr) check(addr);
+      })
+      .catch(() => {
+        // No silent reconnect available; the user can still connect manually.
+      });
+
+    // React to the user switching or disconnecting accounts in their wallet so
+    // the rendered view never shows a stale address.
+    const onAccountsChanged: AccountsHandler = (accounts) => {
+      const addr = accounts?.[0] as Address | undefined;
+      if (addr) {
+        check(addr);
+      } else {
+        setAddress(null);
+        setError(null);
+        setStatus("disconnected");
+      }
+    };
+
+    provider.on?.("accountsChanged", onAccountsChanged);
+    return () => {
+      cancelled = true;
+      provider.removeListener?.("accountsChanged", onAccountsChanged);
+    };
+  }, [check]);
 
   async function connect() {
     setError(null);
@@ -58,11 +125,7 @@ export default function MembersGate({
         setStatus("error");
         return;
       }
-      setAddress(addr);
-
-      setStatus("checking");
-      const result = await checkAccess(addr);
-      setStatus(result.hasAccess ? "granted" : "denied");
+      await check(addr);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Could not connect to the wallet.";
@@ -71,12 +134,24 @@ export default function MembersGate({
     }
   }
 
+  // Forget the connection on our side and return to the connect prompt. Injected
+  // wallets manage their own permissions, so this clears the local view rather
+  // than revoking access in the wallet itself.
+  function disconnect() {
+    setAddress(null);
+    setError(null);
+    setStatus("disconnected");
+  }
+
   if (status === "granted") {
     return (
       <>
         <p className="eco-bucket-note">
           Access granted for{" "}
-          <span className="gate-address">{address}</span> (OG or ZOR held).
+          <span className="gate-address">{address}</span> (OG or ZOR held).{" "}
+          <button type="button" className="gate-link" onClick={disconnect}>
+            Disconnect
+          </button>
         </p>
         {children}
       </>
