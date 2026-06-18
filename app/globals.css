@@ -36,6 +36,32 @@ a:hover {
   color: var(--gold-hot);
 }
 
+/* Visible keyboard focus across all interactive elements. */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Skip-to-content link: off-screen until focused, then pinned top-left so
+   keyboard users can jump past the nav. */
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -48px;
+  z-index: 100;
+  padding: 8px 14px;
+  background: var(--gold);
+  color: var(--navy);
+  font-weight: 700;
+  border-radius: 8px;
+  transition: top 0.15s;
+}
+.skip-link:focus {
+  top: 8px;
+  color: var(--navy);
+}
+
 .topnav {
   display: flex;
   justify-content: space-between;
