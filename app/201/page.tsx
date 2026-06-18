@@ -28,6 +28,32 @@ export default async function MembersPage() {
 
       <MembersGate>
         <section>
+          <h2>Your first week on the floor</h2>
+          <p>Just got in? Here is the path for your first week.</p>
+          <ol>
+            <li>
+              <strong>Come to the Monday fractal.</strong> Members meet every
+              Monday at 6pm EST in small groups - that is where the week's work
+              and ranking happen. Show up and meet your group.
+            </li>
+            <li>
+              <strong>Claim something to own.</strong> Pick a specific task or
+              role, set your level (1h/wk, 10h/wk, or undefined), and pair up -
+              every task has a main and an understudy.
+            </li>
+            <li>
+              <strong>Log your work.</strong> Contributions go in the shared
+              Telegram space; that log is what feeds Respect at the fractal.
+            </li>
+            <li>
+              <strong>
+                Make <a href="https://zaoos.com">zaoos.com</a> your home base.
+              </strong>{" "}
+              Chat, music, events, and the org's tooling all come together
+              there. The members directory below has the rest.
+            </li>
+          </ol>
+
           <h2>The fractal, Respect, and OREC</h2>
           <p>
             The ZAO governs itself through a fractal process. Every Monday at
