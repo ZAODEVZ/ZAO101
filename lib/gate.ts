@@ -5,7 +5,7 @@
 // independent of whatever chain the connected wallet is currently on. Holding
 // EITHER token grants access.
 
-import { createPublicClient, erc20Abi, http, type Address } from "viem";
+import { createPublicClient, erc20Abi, fallback, http, type Address } from "viem";
 import { optimism } from "viem/chains";
 
 // OG: ERC-20 - access if balanceOf(addr) > 0
@@ -28,15 +28,27 @@ const ERC1155_BALANCE_ABI = [
   },
 ] as const;
 
-// Optimism RPC endpoint. Defaults to the public node, which can rate-limit, so
-// it is overridable via NEXT_PUBLIC_OPTIMISM_RPC_URL (must be NEXT_PUBLIC_ as
-// this client runs in the browser).
-const OPTIMISM_RPC_URL =
-  process.env.NEXT_PUBLIC_OPTIMISM_RPC_URL || "https://mainnet.optimism.io";
+// Optimism RPC endpoints. The gate makes only two read calls, but public nodes
+// rate-limit, so we spread requests across several free public endpoints with a
+// fallback transport: viem auto-fails-over to the next node and re-ranks them by
+// latency and stability every few seconds. This means the gate works with no
+// configuration. NEXT_PUBLIC_OPTIMISM_RPC_URL, if set, is tried first - point it
+// at a dedicated provider only if the public nodes prove insufficient. The var
+// must be NEXT_PUBLIC_ as this client runs in the browser.
+const RPC_URLS = [
+  process.env.NEXT_PUBLIC_OPTIMISM_RPC_URL,
+  "https://mainnet.optimism.io",
+  "https://optimism-rpc.publicnode.com",
+  "https://optimism.llamarpc.com",
+  "https://optimism.drpc.org",
+].filter((url): url is string => Boolean(url));
 
 const publicClient = createPublicClient({
   chain: optimism,
-  transport: http(OPTIMISM_RPC_URL),
+  transport: fallback(
+    RPC_URLS.map((url) => http(url)),
+    { rank: true },
+  ),
 });
 
 export interface GateResult {
