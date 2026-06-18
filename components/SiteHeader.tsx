@@ -16,7 +16,7 @@ export default function SiteHeader() {
       <Link href="/" className="brand">
         ZAO 101
       </Link>
-      <nav>
+      <nav aria-label="Primary">
         {NAV.map((item) => (
           <Link key={item.href} href={item.href}>
             {item.label}
