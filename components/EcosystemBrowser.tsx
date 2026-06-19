@@ -1,0 +1,154 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import type { GroupedResponse } from "@/lib/nexus";
+import { NEXUS_PUBLIC_URL } from "@/lib/nexus";
+
+// Client-side search + category filter over the grouped Nexus data. The data is
+// still fetched server-side (ISR) and passed in as a prop - this only filters
+// what is already on the page, so there are no extra requests and no new
+// dependencies. The read-only render matches GroupedLinks (used on /201), which
+// is intentionally left unchanged.
+
+const ALL = "All";
+
+export default function EcosystemBrowser({
+  data,
+}: {
+  data: GroupedResponse | null;
+}) {
+  const [query, setQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string>(ALL);
+
+  const categories = data?.categories ?? [];
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return categories
+      .filter((c) => activeCategory === ALL || c.mainCategory === activeCategory)
+      .map((category) => ({
+        ...category,
+        subcategories: category.subcategories
+          .map((sub) => ({
+            ...sub,
+            links: sub.links.filter((link) => {
+              if (!q) return true;
+              const haystack = [
+                link.title,
+                link.description,
+                ...(link.tags ?? []),
+              ]
+                .join(" ")
+                .toLowerCase();
+              return haystack.includes(q);
+            }),
+          }))
+          .filter((sub) => sub.links.length > 0),
+      }))
+      .filter((category) => category.subcategories.length > 0);
+  }, [categories, query, activeCategory]);
+
+  if (!data || data.categories.length === 0) {
+    return (
+      <div className="placeholder">
+        The live list could not be loaded right now. The canonical source is
+        the ZAO Nexus - visit{" "}
+        <a href={NEXUS_PUBLIC_URL}>nexus.thezao.com</a> for the full,
+        up-to-date list.
+      </div>
+    );
+  }
+
+  const resultCount = filtered.reduce(
+    (n, c) =>
+      n + c.subcategories.reduce((m, s) => m + s.links.length, 0),
+    0,
+  );
+  const isFiltering = query.trim() !== "" || activeCategory !== ALL;
+
+  return (
+    <div className="grouped-links">
+      <div className="eco-controls">
+        <input
+          type="search"
+          className="eco-search"
+          placeholder="Search the ecosystem..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Search the ecosystem"
+        />
+        <div className="eco-filters" role="group" aria-label="Filter by category">
+          <button
+            type="button"
+            className={
+              activeCategory === ALL ? "eco-filter is-active" : "eco-filter"
+            }
+            aria-pressed={activeCategory === ALL}
+            onClick={() => setActiveCategory(ALL)}
+          >
+            All
+          </button>
+          {data.categories.map((c) => (
+            <button
+              key={c.mainCategory}
+              type="button"
+              className={
+                activeCategory === c.mainCategory
+                  ? "eco-filter is-active"
+                  : "eco-filter"
+              }
+              aria-pressed={activeCategory === c.mainCategory}
+              onClick={() => setActiveCategory(c.mainCategory)}
+            >
+              {c.mainCategory}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <p className="eco-bucket-note" role="status" aria-live="polite">
+        {isFiltering
+          ? `${resultCount} of ${data.count} links match.`
+          : `${data.count} links, served live from the ZAO Nexus.`}
+      </p>
+
+      {filtered.length === 0 ? (
+        <p className="placeholder">
+          No links match your search. Try a different term or category.
+        </p>
+      ) : (
+        filtered.map((category) => (
+          <section key={category.mainCategory} className="link-category">
+            <h2>{category.mainCategory}</h2>
+            {category.subcategories.map((sub) => (
+              <div key={sub.subTitle} className="link-subcategory">
+                <h3>{sub.subTitle}</h3>
+                <ul className="link-list">
+                  {sub.links.map((link) => (
+                    <li key={link.url} className="link-item">
+                      <a href={link.url} target="_blank" rel="noreferrer">
+                        {link.title}
+                      </a>
+                      {link.description ? (
+                        <span className="link-desc">{link.description}</span>
+                      ) : null}
+                      {link.tags && link.tags.length > 0 ? (
+                        <span className="link-tags">
+                          {link.tags.map((tag) => (
+                            <span key={tag} className="link-tag">
+                              {tag}
+                            </span>
+                          ))}
+                        </span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </section>
+        ))
+      )}
+    </div>
+  );
+}

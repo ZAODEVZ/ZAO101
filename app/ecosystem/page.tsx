@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import GroupedLinks from "@/components/GroupedLinks";
+import EcosystemBrowser from "@/components/EcosystemBrowser";
 import { fetchGrouped } from "@/lib/nexus";
 
 export const metadata: Metadata = {
@@ -25,7 +25,7 @@ export default async function EcosystemPage() {
         <Link href="/join">How to Join</Link> shows where you plug in.
       </p>
 
-      <GroupedLinks data={data} />
+      <EcosystemBrowser data={data} />
 
       <p>
         <Link href="/org">How it all fits together</Link> &middot;{" "}
