@@ -550,6 +550,13 @@ footer {
   border-color: var(--gold);
   color: var(--navy);
 }
+/* Tag row can be long; keep it contained and visually separated. */
+.eco-tags {
+  max-height: 132px;
+  overflow-y: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
 .tier-badge {
   display: inline-block;
   font-size: 11px;
