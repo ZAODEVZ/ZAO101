@@ -4,13 +4,16 @@ import { useMemo, useState } from "react";
 import type { GroupedResponse } from "@/lib/nexus";
 import { NEXUS_PUBLIC_URL } from "@/lib/nexus";
 
-// Client-side search + category filter over the grouped Nexus data. The data is
-// still fetched server-side (ISR) and passed in as a prop - this only filters
+// Client-side search + category/tag filter over the grouped Nexus data. The data
+// is still fetched server-side (ISR) and passed in as a prop - this only filters
 // what is already on the page, so there are no extra requests and no new
 // dependencies. The read-only render matches GroupedLinks (used on /201), which
 // is intentionally left unchanged.
 
 const ALL = "All";
+// Cap the tag chips so a long tag list does not dominate the page; the search
+// box still reaches any tag by text.
+const MAX_TAGS = 24;
 
 export default function EcosystemBrowser({
   data,
@@ -19,8 +22,27 @@ export default function EcosystemBrowser({
 }) {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>(ALL);
+  const [activeTags, setActiveTags] = useState<string[]>([]);
 
   const categories = data?.categories ?? [];
+
+  // Most common tags across all links, highest frequency first, capped.
+  const topTags = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const category of categories) {
+      for (const sub of category.subcategories) {
+        for (const link of sub.links) {
+          for (const tag of link.tags ?? []) {
+            counts.set(tag, (counts.get(tag) ?? 0) + 1);
+          }
+        }
+      }
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .slice(0, MAX_TAGS)
+      .map(([tag]) => tag);
+  }, [categories]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -32,12 +54,16 @@ export default function EcosystemBrowser({
           .map((sub) => ({
             ...sub,
             links: sub.links.filter((link) => {
+              const tags = link.tags ?? [];
+              // Tag facet: keep links carrying ANY selected tag.
+              if (
+                activeTags.length > 0 &&
+                !activeTags.some((t) => tags.includes(t))
+              ) {
+                return false;
+              }
               if (!q) return true;
-              const haystack = [
-                link.title,
-                link.description,
-                ...(link.tags ?? []),
-              ]
+              const haystack = [link.title, link.description, ...tags]
                 .join(" ")
                 .toLowerCase();
               return haystack.includes(q);
@@ -46,7 +72,7 @@ export default function EcosystemBrowser({
           .filter((sub) => sub.links.length > 0),
       }))
       .filter((category) => category.subcategories.length > 0);
-  }, [categories, query, activeCategory]);
+  }, [categories, query, activeCategory, activeTags]);
 
   if (!data || data.categories.length === 0) {
     return (
@@ -60,11 +86,23 @@ export default function EcosystemBrowser({
   }
 
   const resultCount = filtered.reduce(
-    (n, c) =>
-      n + c.subcategories.reduce((m, s) => m + s.links.length, 0),
+    (n, c) => n + c.subcategories.reduce((m, s) => m + s.links.length, 0),
     0,
   );
-  const isFiltering = query.trim() !== "" || activeCategory !== ALL;
+  const isFiltering =
+    query.trim() !== "" || activeCategory !== ALL || activeTags.length > 0;
+
+  function toggleTag(tag: string) {
+    setActiveTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
+  }
+
+  function clearFilters() {
+    setQuery("");
+    setActiveCategory(ALL);
+    setActiveTags([]);
+  }
 
   return (
     <div className="grouped-links">
@@ -104,17 +142,48 @@ export default function EcosystemBrowser({
             </button>
           ))}
         </div>
+        {topTags.length > 0 ? (
+          <div
+            className="eco-filters eco-tags"
+            role="group"
+            aria-label="Filter by tag"
+          >
+            {topTags.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                className={
+                  activeTags.includes(tag)
+                    ? "eco-filter is-active"
+                    : "eco-filter"
+                }
+                aria-pressed={activeTags.includes(tag)}
+                onClick={() => toggleTag(tag)}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <p className="eco-bucket-note" role="status" aria-live="polite">
         {isFiltering
           ? `${resultCount} of ${data.count} links match.`
           : `${data.count} links, served live from the ZAO Nexus.`}
+        {isFiltering ? (
+          <>
+            {" "}
+            <button type="button" className="gate-link" onClick={clearFilters}>
+              Clear filters
+            </button>
+          </>
+        ) : null}
       </p>
 
       {filtered.length === 0 ? (
         <p className="placeholder">
-          No links match your search. Try a different term or category.
+          No links match your search. Try a different term, category, or tag.
         </p>
       ) : (
         filtered.map((category) => (
