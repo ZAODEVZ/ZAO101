@@ -23,6 +23,7 @@ export default function EcosystemBrowser({
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>(ALL);
   const [activeTags, setActiveTags] = useState<string[]>([]);
+  const [copied, setCopied] = useState(false);
 
   const categories = data?.categories ?? [];
 
@@ -156,6 +157,31 @@ export default function EcosystemBrowser({
     setActiveTags([]);
   }
 
+  // Copy the current URL (which already carries the active filters) so a
+  // filtered view can be shared. Clipboard API with a textarea fallback, the
+  // same approach as OrgCopyButton; no dependency.
+  async function copyLink() {
+    const url = window.location.href;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  }
+
   return (
     <div className="grouped-links">
       <div className="eco-controls">
@@ -231,6 +257,9 @@ export default function EcosystemBrowser({
             {" "}
             <button type="button" className="gate-link" onClick={clearFilters}>
               Clear filters
+            </button>{" "}
+            <button type="button" className="gate-link" onClick={copyLink}>
+              {copied ? "Link copied" : "Copy link"}
             </button>
           </>
         ) : null}
