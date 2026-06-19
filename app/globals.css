@@ -505,6 +505,51 @@ footer {
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* /ecosystem search + category filter controls */
+.eco-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+}
+.eco-search {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--navy-2);
+  color: var(--ink);
+  font-size: 15px;
+}
+.eco-search::placeholder {
+  color: var(--ink-2);
+}
+.eco-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.eco-filter {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.eco-filter:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.eco-filter.is-active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--navy);
+}
 .tier-badge {
   display: inline-block;
   font-size: 11px;
