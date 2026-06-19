@@ -5,7 +5,7 @@ second, tech third.
 
 Live at [101.thezao.com](https://101.thezao.com).
 
-Two tiers in one Next.js 14 (App Router) site:
+Two tiers in one Next.js 15 (App Router) site:
 
 - **ZAO 101** - the open, public front door. No wallet. Start Here, the org
   chart, a live ecosystem overview, ZABAL Games, and how to join.
@@ -35,7 +35,8 @@ decides what UI renders. There are no secrets behind it.
 - `/` - ZAO 101 home (Start Here + sections)
 - `/pillars` - the four pillars
 - `/org` - the org chart with one-click copy of the plain-text version
-- `/ecosystem` - live ecosystem overview (`audience=ecosystem&group=true`)
+- `/ecosystem` - live ecosystem directory (`audience=ecosystem&group=true`) with
+  client-side search, category and tag filters, and shareable filter URLs
 - `/zabal-games` - the builder-engagement door
 - `/join` - how to engage
 - `/faq` - common questions
@@ -48,6 +49,10 @@ npm install
 npm run dev      # http://localhost:3000
 npm run build    # production build
 ```
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for notable changes.
 
 ## Links
 
