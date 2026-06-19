@@ -32,6 +32,29 @@ export default function EcosystemBrowser({
   // the URL via replaceState. We use history directly rather than the Next
   // router hooks so no Suspense boundary is needed and there is no navigation.
   const syncedOnce = useRef(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  // Press "/" anywhere on the page to jump to the search box, unless the focus
+  // is already in a text field. A standard directory shortcut.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = document.activeElement as HTMLElement | null;
+      const tag = el?.tagName;
+      if (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        el?.isContentEditable
+      ) {
+        return;
+      }
+      e.preventDefault();
+      searchRef.current?.focus();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
@@ -186,9 +209,10 @@ export default function EcosystemBrowser({
     <div className="grouped-links">
       <div className="eco-controls">
         <input
+          ref={searchRef}
           type="search"
           className="eco-search"
-          placeholder="Search the ecosystem..."
+          placeholder="Search the ecosystem (press /)"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search the ecosystem"
