@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { GroupedResponse } from "@/lib/nexus";
 import { NEXUS_PUBLIC_URL } from "@/lib/nexus";
 
@@ -25,6 +25,43 @@ export default function EcosystemBrowser({
   const [activeTags, setActiveTags] = useState<string[]>([]);
 
   const categories = data?.categories ?? [];
+
+  // Deep-linkable filters: read the current filter state from the URL on mount
+  // (so a shared link opens pre-filtered), then mirror later changes back into
+  // the URL via replaceState. We use history directly rather than the Next
+  // router hooks so no Suspense boundary is needed and there is no navigation.
+  const syncedOnce = useRef(false);
+
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const q = sp.get("q") ?? "";
+    const cat = sp.get("cat");
+    const tags = sp.get("tags");
+    if (q) setQuery(q);
+    if (cat && categories.some((c) => c.mainCategory === cat)) {
+      setActiveCategory(cat);
+    }
+    if (tags) setActiveTags(tags.split(",").filter(Boolean));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // Skip the first run so the mount-time read above is not overwritten.
+    if (!syncedOnce.current) {
+      syncedOnce.current = true;
+      return;
+    }
+    const sp = new URLSearchParams();
+    if (query.trim()) sp.set("q", query.trim());
+    if (activeCategory !== ALL) sp.set("cat", activeCategory);
+    if (activeTags.length > 0) sp.set("tags", activeTags.join(","));
+    const qs = sp.toString();
+    window.history.replaceState(
+      null,
+      "",
+      qs ? `${window.location.pathname}?${qs}` : window.location.pathname,
+    );
+  }, [query, activeCategory, activeTags]);
 
   // Most common tags across all links, highest frequency first, capped.
   const topTags = useMemo(() => {
