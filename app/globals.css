@@ -557,6 +557,12 @@ footer {
   padding-top: 10px;
   border-top: 1px solid var(--border);
 }
+/* Per-category count badge on the filter chips. */
+.eco-count {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.7;
+}
 .tier-badge {
   display: inline-block;
   font-size: 11px;

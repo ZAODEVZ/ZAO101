@@ -81,6 +81,21 @@ export default function EcosystemBrowser({
       .map(([tag]) => tag);
   }, [categories]);
 
+  // Total links per category (and overall), shown on the chips so the spread of
+  // the directory is visible at a glance. These are full totals, independent of
+  // the active search/tag filters, so the numbers stay stable as you type.
+  const { totalCount, countByCategory } = useMemo(() => {
+    const byCategory = new Map<string, number>();
+    let total = 0;
+    for (const category of categories) {
+      let n = 0;
+      for (const sub of category.subcategories) n += sub.links.length;
+      byCategory.set(category.mainCategory, n);
+      total += n;
+    }
+    return { totalCount: total, countByCategory: byCategory };
+  }, [categories]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return categories
@@ -161,7 +176,7 @@ export default function EcosystemBrowser({
             aria-pressed={activeCategory === ALL}
             onClick={() => setActiveCategory(ALL)}
           >
-            All
+            All <span className="eco-count">{totalCount}</span>
           </button>
           {data.categories.map((c) => (
             <button
@@ -175,7 +190,10 @@ export default function EcosystemBrowser({
               aria-pressed={activeCategory === c.mainCategory}
               onClick={() => setActiveCategory(c.mainCategory)}
             >
-              {c.mainCategory}
+              {c.mainCategory}{" "}
+              <span className="eco-count">
+                {countByCategory.get(c.mainCategory) ?? 0}
+              </span>
             </button>
           ))}
         </div>
