@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import GroupedLinks from "@/components/GroupedLinks";
 import MembersGate from "@/components/MembersGate";
+import WalletProviders from "@/components/WalletProviders";
 import { fetchGrouped } from "@/lib/nexus";
 
 export const metadata: Metadata = {
@@ -26,7 +27,8 @@ export default async function MembersPage() {
         This is where the how-to lives.
       </p>
 
-      <MembersGate>
+      <WalletProviders>
+        <MembersGate>
         <section>
           <h2>Your first week on the floor</h2>
           <p>Just got in? Here is the path for your first week.</p>
@@ -102,7 +104,8 @@ export default async function MembersPage() {
         </section>
 
         <GroupedLinks data={data} />
-      </MembersGate>
+        </MembersGate>
+      </WalletProviders>
 
       <p>
         <Link href="/">Back to ZAO 101</Link>
