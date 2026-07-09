@@ -1,155 +1,77 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
 import type { Address } from "viem";
 import { checkAccess } from "@/lib/gate";
 
 // CURATION, not security. This component only decides whether to render the
 // members view (passed in as children). The same data is sent to every visitor;
 // there are no secrets behind the gate.
+//
+// wagmi handles connecting and exposing the address (injected wallet on desktop,
+// Farcaster Mini App connector inside Farcaster). The balance check itself still
+// runs through lib/gate.ts on Optimism, unchanged.
 
-type Status =
-  | "disconnected"
-  | "connecting"
-  | "checking"
-  | "granted"
-  | "denied"
-  | "error";
-
-type AccountsHandler = (accounts: string[]) => void;
-
-interface EthereumProvider {
-  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
-  // Optional EIP-1193 event API. Injected wallets expose these so a dapp can
-  // react when the user switches or disconnects accounts in the wallet UI.
-  on?: (event: string, handler: AccountsHandler) => void;
-  removeListener?: (event: string, handler: AccountsHandler) => void;
-}
-
-function getProvider(): EthereumProvider | null {
-  if (typeof window === "undefined") return null;
-  const eth = (window as unknown as { ethereum?: EthereumProvider }).ethereum;
-  return eth ?? null;
-}
+type GateStatus = "idle" | "checking" | "granted" | "denied" | "error";
 
 export default function MembersGate({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [status, setStatus] = useState<Status>("disconnected");
-  const [address, setAddress] = useState<Address | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { address, isConnected } = useAccount();
+  const { connect, connectors, isPending, error: connectError } = useConnect();
+  const { disconnect } = useDisconnect();
 
-  // Run the balance check for an address and move to granted/denied. Shared by
-  // the initial connect, a silent reconnect, and the accountsChanged handler so
-  // the gate always reflects the wallet's currently selected account. We only
-  // read a balance on Optimism (via the gate's own RPC), so the wallet's active
-  // chain does not matter and chainChanged needs no handling here.
-  const check = useCallback(async (addr: Address) => {
-    setError(null);
-    setAddress(addr);
-    setStatus("checking");
-    try {
-      const result = await checkAccess(addr);
-      setStatus(result.hasAccess ? "granted" : "denied");
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Could not check token balances.";
-      setError(message);
-      setStatus("error");
-    }
-  }, []);
+  const [gate, setGate] = useState<GateStatus>("idle");
+  const [checkError, setCheckError] = useState<string | null>(null);
 
-  // On mount, silently restore a prior connection without prompting. eth_accounts
-  // returns the already-authorized accounts (empty if the user never connected
-  // or has since disconnected), so a page refresh keeps members on the floor.
+  // Whenever we have a connected address, check token balances. Re-runs if the
+  // address changes (wagmi surfaces account switches), so the view never shows a
+  // stale result.
   useEffect(() => {
-    const provider = getProvider();
-    if (!provider) return;
-
-    let cancelled = false;
-
-    provider
-      .request({ method: "eth_accounts" })
-      .then((result) => {
-        const addr = (result as string[] | undefined)?.[0] as
-          | Address
-          | undefined;
-        if (!cancelled && addr) check(addr);
-      })
-      .catch(() => {
-        // No silent reconnect available; the user can still connect manually.
-      });
-
-    // React to the user switching or disconnecting accounts in their wallet so
-    // the rendered view never shows a stale address.
-    const onAccountsChanged: AccountsHandler = (accounts) => {
-      const addr = accounts?.[0] as Address | undefined;
-      if (addr) {
-        check(addr);
-      } else {
-        setAddress(null);
-        setError(null);
-        setStatus("disconnected");
-      }
-    };
-
-    provider.on?.("accountsChanged", onAccountsChanged);
-    return () => {
-      cancelled = true;
-      provider.removeListener?.("accountsChanged", onAccountsChanged);
-    };
-  }, [check]);
-
-  async function connect() {
-    setError(null);
-    const provider = getProvider();
-    if (!provider) {
-      setError(
-        "No wallet found. Install an injected wallet (e.g. MetaMask, Rabby, Coinbase Wallet) and try again."
-      );
-      setStatus("error");
+    if (!isConnected || !address) {
+      setGate("idle");
+      setCheckError(null);
       return;
     }
 
-    try {
-      setStatus("connecting");
-      const accounts = (await provider.request({
-        method: "eth_requestAccounts",
-      })) as string[];
-      const addr = accounts?.[0] as Address | undefined;
-      if (!addr) {
-        setError("No account returned by the wallet.");
-        setStatus("error");
-        return;
-      }
-      await check(addr);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Could not connect to the wallet.";
-      setError(message);
-      setStatus("error");
-    }
-  }
+    let cancelled = false;
+    setGate("checking");
+    setCheckError(null);
+    checkAccess(address as Address)
+      .then((result) => {
+        if (cancelled) return;
+        setGate(result.hasAccess ? "granted" : "denied");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setCheckError(
+          err instanceof Error
+            ? err.message
+            : "Could not check token balances.",
+        );
+        setGate("error");
+      });
 
-  // Forget the connection on our side and return to the connect prompt. Injected
-  // wallets manage their own permissions, so this clears the local view rather
-  // than revoking access in the wallet itself.
-  function disconnect() {
-    setAddress(null);
-    setError(null);
-    setStatus("disconnected");
-  }
+    return () => {
+      cancelled = true;
+    };
+  }, [isConnected, address]);
 
-  if (status === "granted") {
+  if (gate === "granted") {
     return (
       <>
         <p className="eco-bucket-note">
           Access granted for{" "}
           <span className="gate-address">{address}</span> (OG or ZOR held).{" "}
-          <button type="button" className="gate-link" onClick={disconnect}>
+          <button
+            type="button"
+            className="gate-link"
+            onClick={() => disconnect()}
+          >
             Disconnect
           </button>
         </p>
@@ -158,7 +80,7 @@ export default function MembersGate({
     );
   }
 
-  if (status === "denied") {
+  if (gate === "denied") {
     return (
       <div className="gate">
         <h2>No OG or ZOR found in this wallet</h2>
@@ -183,7 +105,7 @@ export default function MembersGate({
           <button
             type="button"
             className="btn-secondary"
-            onClick={connect}
+            onClick={() => disconnect()}
           >
             Try another wallet
           </button>
@@ -191,6 +113,11 @@ export default function MembersGate({
       </div>
     );
   }
+
+  // Not yet granted/denied: show the connect prompt. Covers idle, checking, and
+  // error. While connecting or mid-check the buttons are disabled.
+  const busy = isPending || gate === "checking";
+  const message = checkError ?? (connectError ? connectError.message : null);
 
   return (
     <div className="gate">
@@ -200,20 +127,23 @@ export default function MembersGate({
         (ERC-20) or the ZOR (ERC-1155). Connect your wallet so we can check.
       </p>
       <div className="copy-row">
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={connect}
-          disabled={status === "connecting" || status === "checking"}
-        >
-          {status === "connecting"
-            ? "Connecting..."
-            : status === "checking"
+        {connectors.map((connector) => (
+          <button
+            key={connector.uid}
+            type="button"
+            className="btn-primary"
+            onClick={() => connect({ connector })}
+            disabled={busy}
+          >
+            {gate === "checking"
               ? "Checking balances..."
-              : "Connect wallet"}
-        </button>
+              : isPending
+                ? "Connecting..."
+                : `Connect ${connector.name}`}
+          </button>
+        ))}
       </div>
-      {error ? <p className="gate-error">{error}</p> : null}
+      {message ? <p className="gate-error">{message}</p> : null}
       <p className="gate-note">
         This gate is curation, not security - it only decides what gets shown.
         We read your balance to render the right view and store nothing. New
