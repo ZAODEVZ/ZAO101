@@ -22,7 +22,7 @@ const GROUPS: Group[] = [
     items: [
       {
         title: "Developer Roadmap",
-        url: "https://github.com/kamranahmedse/developer-roadmap",
+        url: "https://github.com/nilbuild/developer-roadmap",
         note: "Step-by-step maps of what to learn, and in what order.",
       },
       {
@@ -125,7 +125,7 @@ const GROUPS: Group[] = [
       },
       {
         title: "Free Certifications",
-        url: "https://github.com/cloudcommunity/Free-Certifications",
+        url: "https://github.com/ArslanYM/Free-Certifications",
         note: "Free courses that end in a certificate.",
       },
       {
