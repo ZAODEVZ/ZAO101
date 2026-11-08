@@ -67,6 +67,7 @@ When writing content:
   tag filters, shareable filter URLs (`EcosystemBrowser`)
 - `/zabal-games` — the builder-engagement door
 - `/join` — how to engage (3 doors) + step-by-step first action
+- `/learn` — free open source learning repos for members who want to build
 - `/faq` — common questions
 - `/201` — token-gated members floor
 
