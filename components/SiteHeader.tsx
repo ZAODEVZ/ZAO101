@@ -5,6 +5,7 @@ const NAV = [
   { href: "/org", label: "Org" },
   { href: "/ecosystem", label: "Ecosystem" },
   { href: "/zabal-games", label: "ZABAL Games" },
+  { href: "/learn", label: "Learn" },
   { href: "/join", label: "Join" },
   { href: "/faq", label: "FAQ" },
   { href: "/201", label: "ZAO 201" },

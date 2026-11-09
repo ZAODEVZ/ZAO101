@@ -16,6 +16,7 @@ const ROUTES: Array<{
   { path: "/join", changeFrequency: "monthly", priority: 0.7 },
   { path: "/org", changeFrequency: "monthly", priority: 0.6 },
   { path: "/zabal-games", changeFrequency: "monthly", priority: 0.6 },
+  { path: "/learn", changeFrequency: "monthly", priority: 0.5 },
   { path: "/faq", changeFrequency: "monthly", priority: 0.5 },
 ];
 
