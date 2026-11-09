@@ -179,7 +179,7 @@ export default function LearnPage() {
           Awesome Repos
         </a>
         , a free list with many more. Built something? Show it at{" "}
-        <Link href="/zabal-games">ZABAL Games</Link> or start at{" "}
+        <Link href="/zabal-games">ZABAL Gamez</Link> or start at{" "}
         <Link href="/join">How to Join</Link>.
       </p>
 
